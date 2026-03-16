@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1032578001573",
+    "project_id": "microredesocialdudazt",
+    "storage_bucket": "microredesocialdudazt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032578001573:android:ab414267fc79778004bb4c",
+        "android_client_info": {
+          "package_name": "br.com.ifsp.dudazt.microredesocial"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-w23ICnQe26uhchjhHDdqtgi7__2vd8Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
