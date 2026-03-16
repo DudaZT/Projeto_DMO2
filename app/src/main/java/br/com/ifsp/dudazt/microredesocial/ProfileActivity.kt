@@ -1,5 +1,6 @@
 package br.com.ifsp.dudazt.microredesocial
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -7,6 +8,9 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import br.com.ifsp.dudazt.microredesocial.databinding.ActivityProfileBinding
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.firestore
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -30,6 +34,7 @@ class ProfileActivity : AppCompatActivity() {
         binding = ActivityProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // botão alterar foto
         binding.btnChangePhoto.setOnClickListener {
 
             galeria.launch(
@@ -37,6 +42,40 @@ class ProfileActivity : AppCompatActivity() {
                     ActivityResultContracts.PickVisualMedia.ImageOnly
                 )
             )
+
+        }
+
+        // botão salvar
+        binding.btnSave.setOnClickListener {
+
+            val firebaseAuth = FirebaseAuth.getInstance()
+
+            if (firebaseAuth.currentUser != null){
+
+                val email = firebaseAuth.currentUser!!.email.toString()
+                val username = binding.edtUsername.text.toString()
+                val nomecompleto = binding.edtFullName.text.toString()
+
+                val fotoPerfilString = Base64Converter.drawableToString(binding.imgProfile.drawable)
+
+                val db = Firebase.firestore
+
+                val dados = hashMapOf(
+                    "nomecompleto" to nomecompleto,
+                    "username" to username,
+                    "fotoPerfil" to fotoPerfilString
+                )
+
+                db.collection("usuarios")
+                    .document(email)
+                    .set(dados)
+                    .addOnSuccessListener {
+
+                        startActivity(Intent(this, HomeActivity::class.java))
+                        finish()
+
+                    }
+            }
 
         }
     }
