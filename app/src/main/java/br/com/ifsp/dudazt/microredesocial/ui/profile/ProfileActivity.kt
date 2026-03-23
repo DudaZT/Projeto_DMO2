@@ -1,4 +1,4 @@
-package br.com.ifsp.dudazt.microredesocial
+package br.com.ifsp.dudazt.microredesocial.ui.profile
 
 import android.content.Intent
 import android.net.Uri
@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import br.com.ifsp.dudazt.microredesocial.util.Base64Converter
 import br.com.ifsp.dudazt.microredesocial.databinding.ActivityProfileBinding
+import br.com.ifsp.dudazt.microredesocial.ui.home.HomeActivity
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore

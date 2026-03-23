@@ -1,10 +1,11 @@
-package br.com.ifsp.dudazt.microredesocial
+package br.com.ifsp.dudazt.microredesocial.ui.signup
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import br.com.ifsp.dudazt.microredesocial.databinding.ActivitySignUpBinding
+import br.com.ifsp.dudazt.microredesocial.ui.profile.ProfileActivity
 import com.google.firebase.auth.FirebaseAuth
 
 class SignUpActivity : AppCompatActivity() {

@@ -1,4 +1,4 @@
-package br.com.ifsp.dudazt.microredesocial
+package br.com.ifsp.dudazt.microredesocial.util
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
