@@ -13,11 +13,11 @@ import br.com.ifsp.dudazt.microredesocial.ui.main.MainActivity
 import br.com.ifsp.dudazt.microredesocial.util.Base64Converter
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import br.com.ifsp.dudazt.microredesocial.ui.post.PostActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import br.com.ifsp.dudazt.microredesocial.R
 import br.com.ifsp.dudazt.microredesocial.ui.addpost.AddPostActivity
-
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Query
 
 class HomeActivity : AppCompatActivity() {
 
@@ -26,6 +26,9 @@ class HomeActivity : AppCompatActivity() {
     private val db = Firebase.firestore
     private lateinit var adapter: PostAdapter
     private lateinit var posts: ArrayList<Post>
+
+    private var ultimoTimestamp: Timestamp? = null
+    private val limite = 5
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,43 +48,15 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, AddPostActivity::class.java))
         }
 
+        // BOTÃO COM PAGINAÇÃO
         binding.btnCarregarFeed.setOnClickListener {
-
-            db.collection("posts").get()
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-
-                        posts = ArrayList()
-
-                        for (document in task.result.documents) {
-
-                            val imageString = document.data?.get("imageString")?.toString()
-
-                            val bitmap = if (!imageString.isNullOrEmpty()) {
-                                Base64Converter.stringToBitmap(imageString)
-                            } else {
-                                // Se não tiver imagem, usar drawable de placeholder
-                                BitmapFactory.decodeResource(resources, R.drawable.empty_profile)
-                            }
-
-                            val descricao = document.data?.get("descricao")?.toString() ?: ""
-
-                            posts.add(Post(descricao, bitmap))
-                        }
-
-                        adapter = PostAdapter(posts.toTypedArray())
-
-                        binding.recyclerView.layoutManager = LinearLayoutManager(this)
-                        binding.recyclerView.adapter = adapter
-                    }
-                }
+            carregarPosts()
         }
     }
 
     private fun carregarDadosUsuario() {
         val email = firebaseAuth.currentUser?.email
         if (email == null) {
-            // Usuário não está logado, volta para login
             startActivity(Intent(this, MainActivity::class.java))
             finish()
             return
@@ -92,9 +67,10 @@ class HomeActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     val document = task.result
                     if (document != null && document.exists()) {
-                        val imageString = document.data?.get("fotoPerfil")?.toString()
-                        val username = document.data?.get("username")?.toString() ?: "Username"
-                        val nomecompleto = document.data?.get("nomecompleto")?.toString() ?: "Nome Completo"
+
+                        val imageString = document.getString("fotoPerfil")
+                        val username = document.getString("username") ?: "Username"
+                        val nomecompleto = document.getString("nomecompleto") ?: "Nome Completo"
 
                         binding.txtUsername.text = username
                         binding.txtNomeCompleto.text = nomecompleto
@@ -107,5 +83,59 @@ class HomeActivity : AppCompatActivity() {
                     }
                 }
             }
+    }
+
+    fun carregarPosts() {
+
+        var query = db.collection("posts")
+            .orderBy("data", Query.Direction.DESCENDING)
+            .limit(limite.toLong())
+
+        if (ultimoTimestamp != null) {
+            query = query.startAfter(ultimoTimestamp!!)
+        }
+
+        query.get()
+            .addOnSuccessListener { documentos ->
+
+                if (!documentos.isEmpty) {
+
+                    ultimoTimestamp = documentos.documents.last().getTimestamp("data")
+
+                    val novosPosts = ArrayList<Post>()
+
+                    for (document in documentos) {
+
+                        val imageString = document.getString("imageString")
+
+                        val bitmap = if (!imageString.isNullOrEmpty()) {
+                            Base64Converter.stringToBitmap(imageString)
+                        } else {
+                            BitmapFactory.decodeResource(resources, R.drawable.empty_profile)
+                        }
+
+                        val descricao = document.getString("descricao") ?: ""
+
+                        val data = document.getTimestamp("data") ?: Timestamp.now()
+
+                        novosPosts.add(Post(descricao, bitmap, data))
+                    }
+
+                    adicionarPostsNoAdapter(novosPosts)
+                }
+            }
+    }
+
+    fun adicionarPostsNoAdapter(novosPosts: List<Post>) {
+
+        if (!::adapter.isInitialized) {
+            posts = ArrayList()
+            adapter = PostAdapter(posts)
+
+            binding.recyclerView.layoutManager = LinearLayoutManager(this)
+            binding.recyclerView.adapter = adapter
+        }
+
+        adapter.adicionarPosts(novosPosts)
     }
 }

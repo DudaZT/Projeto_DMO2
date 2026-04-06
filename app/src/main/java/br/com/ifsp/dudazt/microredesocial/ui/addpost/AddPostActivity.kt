@@ -12,6 +12,7 @@ import br.com.ifsp.dudazt.microredesocial.ui.home.HomeActivity
 import br.com.ifsp.dudazt.microredesocial.util.Base64Converter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.Timestamp
 
 class AddPostActivity : AppCompatActivity() {
 
@@ -54,7 +55,8 @@ class AddPostActivity : AppCompatActivity() {
 
                 val dados = hashMapOf(
                     "descricao" to descricao,
-                    "imageString" to fotoString
+                    "imageString" to fotoString,
+                    "data" to Timestamp.now()
                 )
 
                 db.collection("posts")

@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import br.com.ifsp.dudazt.microredesocial.data.model.Post
 import br.com.ifsp.dudazt.microredesocial.databinding.PostItemBinding
 
-class PostAdapter(private val posts: Array<Post>) :
+class PostAdapter(private val posts: MutableList<Post>) :
     RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
     class PostViewHolder(val binding: PostItemBinding) :
@@ -29,4 +29,10 @@ class PostAdapter(private val posts: Array<Post>) :
     }
 
     override fun getItemCount(): Int = posts.size
+
+    fun adicionarPosts(novosPosts: List<Post>) {
+        val inicio = posts.size
+        posts.addAll(novosPosts)
+        notifyItemRangeInserted(inicio, novosPosts.size)
+    }
 }
