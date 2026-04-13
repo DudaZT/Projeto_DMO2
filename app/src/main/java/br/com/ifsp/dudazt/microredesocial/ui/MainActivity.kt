@@ -1,11 +1,9 @@
-package br.com.ifsp.dudazt.microredesocial.ui.main
+package br.com.ifsp.dudazt.microredesocial.ui
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import br.com.ifsp.dudazt.microredesocial.ui.profile.ProfileActivity
-import br.com.ifsp.dudazt.microredesocial.ui.signup.SignUpActivity
 import br.com.ifsp.dudazt.microredesocial.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 
@@ -27,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         super.onStart()
 
         if (firebaseAuth.currentUser != null) {
-            startActivity(Intent(this, ProfileActivity::class.java))
+            startActivity(Intent(this, HomeActivity::class.java))
             finish()
         }
     }
@@ -48,7 +46,7 @@ class MainActivity : AppCompatActivity() {
             .signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    startActivity(Intent(this, ProfileActivity::class.java))
+                    startActivity(Intent(this, HomeActivity::class.java))
                     finish()
                 } else {
                     Toast.makeText(this, "Erro no login", Toast.LENGTH_LONG).show()

@@ -2,82 +2,58 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/home"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="24dp"
-    >
+    android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/imgProfile"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:src="@drawable/empty_profile"
-        android:scaleType="centerCrop"
+    <EditText
+        android:id="@+id/edtSearchCity"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Buscar por cidade"
+        android:padding="10dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="40dp"/>
+        app:layout_constraintEnd_toStartOf="@+id/btnSearch"/>
 
-    <TextView
-        android:id="@+id/txtUsername"
+    <Button
+        android:id="@+id/btnSearch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Username"
-        android:textStyle="italic"
-        android:textSize="16sp"
-        android:textColor="#888888"
-        app:layout_constraintTop_toBottomOf="@id/imgProfile"
-        android:layout_marginTop="12dp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:text="Buscar"
+        app:layout_constraintTop_toTopOf="@id/edtSearchCity"
+        app:layout_constraintBottom_toBottomOf="@id/edtSearchCity"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <TextView
-        android:id="@+id/txtNomeCompleto"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/header"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Nome Completo"
-        app:layout_constraintTop_toBottomOf="@id/txtUsername"
-        android:layout_marginTop="4dp"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        app:layout_constraintTop_toBottomOf="@id/edtSearchCity"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <Button
-        android:id="@+id/btnSair"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="SAIR"
-        android:layout_marginTop="40dp"
-        app:layout_constraintTop_toBottomOf="@id/txtNomeCompleto"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        <Button
+            android:id="@+id/btnAddPost"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="POST"/>
 
-    <Button
-        android:id="@+id/btnAddPost"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="ADICIONAR POST"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/btnSair"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <Button
-        android:id="@+id/btnCarregarFeed"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="CARREGAR FEED"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/btnAddPost"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        <Button
+            android:id="@+id/btnSair"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="SAIR"/>
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/btnCarregarFeed"
+        app:layout_constraintTop_toBottomOf="@id/header"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

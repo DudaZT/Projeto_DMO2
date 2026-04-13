@@ -3,8 +3,10 @@ package br.com.ifsp.dudazt.microredesocial.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import br.com.ifsp.dudazt.microredesocial.R
 import br.com.ifsp.dudazt.microredesocial.data.model.Post
 import br.com.ifsp.dudazt.microredesocial.databinding.PostItemBinding
+import br.com.ifsp.dudazt.microredesocial.util.Base64Converter
 
 class PostAdapter(private val posts: MutableList<Post>) :
     RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
@@ -21,14 +23,22 @@ class PostAdapter(private val posts: MutableList<Post>) :
         return PostViewHolder(binding)
     }
 
+    override fun getItemCount() = posts.size
+
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = posts[position]
 
-        holder.binding.txtDescricao.text = post.descricao
-        holder.binding.imgPost.setImageBitmap(post.imagem)
-    }
+        try {
+            val bitmap = Base64Converter.stringToBitmap(post.imageString)
+            holder.binding.imgPost.setImageBitmap(bitmap)
+        } catch (e: Exception) {
+            holder.binding.imgPost.setImageResource(R.drawable.empty_profile)
+        }
 
-    override fun getItemCount(): Int = posts.size
+        holder.binding.txtDescricao.text = post.descricao
+        holder.binding.txtCidade.text = post.city
+        holder.binding.txtAutor.text = post.authorId
+    }
 
     fun adicionarPosts(novosPosts: List<Post>) {
         val inicio = posts.size

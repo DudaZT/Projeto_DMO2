@@ -1,4 +1,4 @@
-package br.com.ifsp.dudazt.microredesocial.ui.post
+package br.com.ifsp.dudazt.microredesocial.ui
 
 import android.graphics.Bitmap
 import android.os.Bundle
