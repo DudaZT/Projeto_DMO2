@@ -8,21 +8,28 @@ import android.util.Base64
 import androidx.core.graphics.scale
 import java.io.ByteArrayOutputStream
 
-class Base64Converter
-{
+class Base64Converter {
+
     companion object {
-        fun drawableToString(drawable: Drawable) : String {
-            val pictureDrawable = drawable as BitmapDrawable
-            val bitmap = pictureDrawable.bitmap.scale(150, 150)
-            val outputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-            val imageString = Base64.encodeToString(outputStream.toByteArray(),0)
-            return imageString
+
+        fun drawableToString(drawable: Drawable): String {
+            val bitmap = (drawable as BitmapDrawable).bitmap
+            return bitmapToString(bitmap)
         }
-        fun stringToBitmap(imageString: String) : Bitmap {
+
+        fun bitmapToString(bitmap: Bitmap): String {
+            val resized = bitmap.scale(150, 150)
+
+            val outputStream = ByteArrayOutputStream()
+            resized.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+
+            val bytes = outputStream.toByteArray()
+            return Base64.encodeToString(bytes, Base64.DEFAULT)
+        }
+
+        fun stringToBitmap(imageString: String): Bitmap {
             val imageBytes = Base64.decode(imageString, Base64.DEFAULT)
-            val decodedImage = BitmapFactory.decodeByteArray(imageBytes,0,imageBytes.size)
-            return decodedImage
+            return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
         }
     }
 }

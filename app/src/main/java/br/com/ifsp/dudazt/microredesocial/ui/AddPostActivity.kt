@@ -47,7 +47,6 @@ class AddPostActivity : AppCompatActivity(), LocalizacaoHelper.Callback {
     }
 
     private fun solicitarLocalizacao() {
-
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -75,9 +74,15 @@ class AddPostActivity : AppCompatActivity(), LocalizacaoHelper.Callback {
             endereco.locality,
             endereco.subAdminArea,
             endereco.adminArea
-        ).firstOrNull() ?: "Desconhecida"
+        ).firstOrNull() ?: "desconhecida"
 
         salvarPost(cidadeFormatada.trim().lowercase())
+    }
+
+    override fun onErro(mensagem: String) {
+        Toast.makeText(this, "Erro localização: $mensagem", Toast.LENGTH_SHORT).show()
+
+        salvarPost("desconhecida")
     }
 
     private fun salvarPost(cidade: String) {
@@ -89,13 +94,25 @@ class AddPostActivity : AppCompatActivity(), LocalizacaoHelper.Callback {
             return
         }
 
-        val imagem = Base64Converter.drawableToString(binding.imgPost.drawable)
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId == null) {
+            Toast.makeText(this, "Usuário não autenticado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val drawable = binding.imgPost.drawable
+        if (drawable == null) {
+            Toast.makeText(this, "Selecione uma imagem", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val imagem = Base64Converter.drawableToString(drawable)
 
         val dados = hashMapOf(
             "descricao" to descricao,
             "imageString" to imagem,
             "city" to cidade,
-            "authorId" to FirebaseAuth.getInstance().currentUser?.uid,
+            "authorId" to userId,
             "data" to Timestamp.now()
         )
 
@@ -107,9 +124,9 @@ class AddPostActivity : AppCompatActivity(), LocalizacaoHelper.Callback {
                 startActivity(Intent(this, HomeActivity::class.java))
                 finish()
             }
-    }
-
-    override fun onErro(mensagem: String) {
-        Toast.makeText(this, mensagem, Toast.LENGTH_SHORT).show()
+            .addOnFailureListener { e ->
+                e.printStackTrace()
+                Toast.makeText(this, "Erro ao salvar: ${e.message}", Toast.LENGTH_LONG).show()
+            }
     }
 }

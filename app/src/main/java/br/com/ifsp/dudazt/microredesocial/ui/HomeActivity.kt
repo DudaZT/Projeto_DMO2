@@ -5,14 +5,17 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import br.com.ifsp.dudazt.microredesocial.R
 import br.com.ifsp.dudazt.microredesocial.adapter.PostAdapter
 import br.com.ifsp.dudazt.microredesocial.data.model.Post
 import br.com.ifsp.dudazt.microredesocial.databinding.ActivityHomeBinding
-import com.google.firebase.Firebase
+import br.com.ifsp.dudazt.microredesocial.ui.ProfileActivity
+import br.com.ifsp.dudazt.microredesocial.util.Base64Converter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
+import com.google.firebase.Firebase
 
 class HomeActivity : AppCompatActivity() {
 
@@ -43,7 +46,12 @@ class HomeActivity : AppCompatActivity() {
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
 
+        carregarPerfilUsuario()
         carregarPosts()
+
+        binding.btnPerfil.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
 
         binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -67,19 +75,47 @@ class HomeActivity : AppCompatActivity() {
         binding.edtSearchCity.setOnEditorActionListener { _, _, _ ->
             val text = binding.edtSearchCity.text.toString()
 
-            if (text.isBlank()) {
-                resetarFeed()
-            } else {
-                buscarPorCidade(text)
-            }
+            if (text.isBlank()) resetarFeed()
+            else buscarPorCidade(text)
 
             true
         }
     }
 
-    // =========================
-    // FEED NORMAL
-    // =========================
+    override fun onResume() {
+        super.onResume()
+        carregarPerfilUsuario()
+    }
+
+    private fun carregarPerfilUsuario() {
+
+        val email = firebaseAuth.currentUser?.email ?: return
+
+        db.collection("usuarios")
+            .document(email)
+            .get()
+            .addOnSuccessListener { doc ->
+
+                if (doc.exists()) {
+
+                    val username = doc.getString("username") ?: ""
+                    val nome = doc.getString("nomecompleto") ?: ""
+                    val foto = doc.getString("fotoPerfil")
+
+                    binding.txtUsername.text = "@$username"
+                    binding.txtNome.text = nome
+
+                    try {
+                        if (foto != null) {
+                            val bitmap = Base64Converter.stringToBitmap(foto)
+                            binding.imgUser.setImageBitmap(bitmap)
+                        }
+                    } catch (e: Exception) {
+                        binding.imgUser.setImageResource(R.drawable.empty_profile)
+                    }
+                }
+            }
+    }
 
     private fun carregarPosts() {
 
@@ -106,22 +142,14 @@ class HomeActivity : AppCompatActivity() {
 
                 val novos = result.toObjects(Post::class.java)
 
-                if (novos.isNotEmpty()) {
-                    ultimoDocumento = result.documents.last()
-                    posts.addAll(novos)
-                    adapter.notifyDataSetChanged()
-                }
+                ultimoDocumento = result.documents.last()
 
-                isLoading = false
-            }
-            .addOnFailureListener {
+                posts.addAll(novos)
+                adapter.notifyDataSetChanged()
+
                 isLoading = false
             }
     }
-
-    // =========================
-    // BUSCA
-    // =========================
 
     private fun buscarPorCidade(cidade: String) {
 
@@ -141,13 +169,15 @@ class HomeActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { result ->
 
-                posts.clear()
-                posts.addAll(result.toObjects(Post::class.java))
+                val novos = result.toObjects(Post::class.java)
+
+                if (result.documents.isNotEmpty()) {
+                    ultimoDocumento = result.documents.last()
+                }
+
+                posts.addAll(novos)
                 adapter.notifyDataSetChanged()
 
-                isLoading = false
-            }
-            .addOnFailureListener {
                 isLoading = false
             }
     }
@@ -179,12 +209,10 @@ class HomeActivity : AppCompatActivity() {
                 val novos = result.toObjects(Post::class.java)
 
                 ultimoDocumento = result.documents.last()
+
                 posts.addAll(novos)
                 adapter.notifyDataSetChanged()
 
-                isLoading = false
-            }
-            .addOnFailureListener {
                 isLoading = false
             }
     }
