@@ -1,6 +1,5 @@
 package br.com.ifsp.dudazt.microredesocial.data.model
 
-import android.graphics.Bitmap
 import com.google.firebase.Timestamp
 
 data class Post(
@@ -8,5 +7,6 @@ data class Post(
     var imageString: String = "",
     var city: String = "",
     var authorId: String = "",
+    var authorName: String = "",
     var data: Timestamp? = null
 )

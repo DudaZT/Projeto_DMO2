@@ -8,9 +8,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import br.com.ifsp.dudazt.microredesocial.databinding.ActivityProfileBinding
 import br.com.ifsp.dudazt.microredesocial.util.Base64Converter
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
-import com.google.firebase.Firebase
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -20,7 +20,6 @@ class ProfileActivity : AppCompatActivity() {
     private val pickMedia = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
-
         uri?.let {
             imagemUri = it
             binding.imgProfile.setImageURI(it)
@@ -33,66 +32,93 @@ class ProfileActivity : AppCompatActivity() {
         binding = ActivityProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val email = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: run {
+            finish()
+            return
+        }
         val db = Firebase.firestore
 
-        binding.imgProfile.setOnClickListener {
-            pickMedia.launch(
-                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-            )
+        // Corrigido: click no botão, não na imagem
+        binding.btnChangePhoto.setOnClickListener {
+            pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
-        // carregar dados
-        db.collection("usuarios")
-            .document(email)
-            .get()
+        // Carregar dados do Firestore
+        db.collection("usuarios").document(email).get()
             .addOnSuccessListener { doc ->
-
                 if (doc.exists()) {
                     binding.edtUsername.setText(doc.getString("username"))
                     binding.edtFullName.setText(doc.getString("nomecompleto"))
 
                     val foto = doc.getString("fotoPerfil")
-                    if (foto != null) {
-                        val bitmap = Base64Converter.stringToBitmap(foto)
-                        binding.imgProfile.setImageBitmap(bitmap)
+                    if (!foto.isNullOrBlank()) {
+                        try {
+                            binding.imgProfile.setImageBitmap(Base64Converter.stringToBitmap(foto))
+                        } catch (e: Exception) { /* mantém placeholder */ }
                     }
                 }
             }
 
+        binding.btnVoltar.setOnClickListener { finish() }
+
         binding.btnSave.setOnClickListener {
+            salvarPerfil(email, db)
+        }
+    }
 
-            val username = binding.edtUsername.text.toString()
-            val nome = binding.edtFullName.text.toString()
+    private fun salvarPerfil(email: String, db: com.google.firebase.firestore.FirebaseFirestore) {
+        val username = binding.edtUsername.text.toString().trim()
+        val nome = binding.edtFullName.text.toString().trim()
+        val novaSenha = binding.edtNovaSenha.text.toString()
 
-            var fotoBase64 = ""
+        if (username.isEmpty() || nome.isEmpty()) {
+            Toast.makeText(this, "Nome de usuário e nome completo são obrigatórios", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-            try {
-                if (imagemUri != null) {
-                    val inputStream = contentResolver.openInputStream(imagemUri!!)
-                    val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
-                    fotoBase64 = Base64Converter.bitmapToString(bitmap)
-                } else {
-                    // caso não tenha escolhido nova imagem
-                    fotoBase64 = Base64Converter.drawableToString(binding.imgProfile.drawable)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
+        // Atualizar senha se preenchida
+        if (novaSenha.isNotBlank()) {
+            if (novaSenha.length < 6) {
+                Toast.makeText(this, "A nova senha deve ter pelo menos 6 caracteres", Toast.LENGTH_SHORT).show()
+                return
             }
-
-            val dados = hashMapOf(
-                "username" to username,
-                "nomecompleto" to nome,
-                "fotoPerfil" to fotoBase64
-            )
-
-            db.collection("usuarios")
-                .document(email)
-                .set(dados)
-                .addOnSuccessListener {
-                    Toast.makeText(this, "Perfil salvo!", Toast.LENGTH_SHORT).show()
-                    finish()
+            FirebaseAuth.getInstance().currentUser?.updatePassword(novaSenha)
+                ?.addOnFailureListener { e ->
+                    Toast.makeText(this, "Erro ao atualizar senha: ${e.message}", Toast.LENGTH_LONG).show()
                 }
         }
+
+        var fotoBase64 = ""
+        try {
+            fotoBase64 = if (imagemUri != null) {
+                val inputStream = contentResolver.openInputStream(imagemUri!!)
+                val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                Base64Converter.bitmapToString(bitmap)
+            } else {
+                Base64Converter.drawableToString(binding.imgProfile.drawable)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        val dados = hashMapOf(
+            "username" to username,
+            "nomecompleto" to nome,
+            "fotoPerfil" to fotoBase64,
+            "email" to email
+        )
+
+        binding.btnSave.isEnabled = false
+
+        db.collection("usuarios").document(email)
+            .set(dados)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Perfil salvo!", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+            .addOnFailureListener { e ->
+                binding.btnSave.isEnabled = true
+                Toast.makeText(this, "Erro ao salvar: ${e.message}", Toast.LENGTH_LONG).show()
+            }
     }
 }

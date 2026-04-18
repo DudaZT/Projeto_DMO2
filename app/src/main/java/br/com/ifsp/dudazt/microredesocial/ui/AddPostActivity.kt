@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.location.Address
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,9 +15,11 @@ import androidx.core.app.ActivityCompat
 import br.com.ifsp.dudazt.microredesocial.databinding.ActivityAddPostBinding
 import br.com.ifsp.dudazt.microredesocial.util.Base64Converter
 import br.com.ifsp.dudazt.microredesocial.util.LocalizacaoHelper
+import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.Timestamp
+import com.google.firebase.firestore.firestore
 
 class AddPostActivity : AppCompatActivity(), LocalizacaoHelper.Callback {
 
@@ -26,107 +29,149 @@ class AddPostActivity : AppCompatActivity(), LocalizacaoHelper.Callback {
     private val galeria = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
-        if (uri != null) binding.imgPost.setImageURI(uri)
+        if (uri != null) {
+            binding.imgPost.setImageURI(uri)
+            binding.txtEscolhaFoto.visibility = View.GONE
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityAddPostBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnChangePhoto.setOnClickListener {
-            galeria.launch(
-                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-            )
-        }
+        binding.imgPost.setOnClickListener { abrirGaleria() }
+        binding.btnChangePhoto.setOnClickListener { abrirGaleria() }
+        binding.btnVoltar.setOnClickListener { finish() }
 
         binding.btnSave.setOnClickListener {
             solicitarLocalizacao()
         }
     }
 
+    private fun abrirGaleria() {
+        galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+
     private fun solicitarLocalizacao() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
         ) {
-
             ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_CODE
+                this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_CODE
             )
-
         } else {
-            val helper = LocalizacaoHelper(this)
-            helper.obterLocalizacaoAtual(this)
+            binding.btnSave.isEnabled = false
+            binding.progressBar.visibility = View.VISIBLE
+            LocalizacaoHelper(this).obterLocalizacaoAtual(this)
         }
     }
 
-    override fun onLocalizacaoRecebida(
-        endereco: Address,
-        latitude: Double,
-        longitude: Double
-    ) {
-        val cidadeFormatada = listOfNotNull(
-            endereco.locality,
-            endereco.subAdminArea,
-            endereco.adminArea
-        ).firstOrNull() ?: "desconhecida"
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                binding.btnSave.isEnabled = false
+                binding.progressBar.visibility = View.VISIBLE
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED
+                ) {
+                    LocalizacaoHelper(this).obterLocalizacaoAtual(this)
+                }
+            } else {
+                // Permissão negada: salva sem cidade
+                salvarPost("desconhecida")
+            }
+        }
+    }
 
-        salvarPost(cidadeFormatada.trim().lowercase())
+    override fun onLocalizacaoRecebida(endereco: Address, latitude: Double, longitude: Double) {
+        val cidade = listOfNotNull(endereco.locality, endereco.subAdminArea, endereco.adminArea)
+            .firstOrNull() ?: "desconhecida"
+        salvarPost(cidade.trim().lowercase())
     }
 
     override fun onErro(mensagem: String) {
-        Toast.makeText(this, "Erro localização: $mensagem", Toast.LENGTH_SHORT).show()
-
         salvarPost("desconhecida")
     }
 
     private fun salvarPost(cidade: String) {
-
-        val descricao = binding.edtDescricao.text.toString()
+        val descricao = binding.edtDescricao.text.toString().trim()
 
         if (descricao.isBlank()) {
+            binding.btnSave.isEnabled = true
+            binding.progressBar.visibility = View.GONE
             Toast.makeText(this, "Digite uma descrição", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId == null) {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
             Toast.makeText(this, "Usuário não autenticado", Toast.LENGTH_SHORT).show()
             return
         }
 
         val drawable = binding.imgPost.drawable
         if (drawable == null) {
+            binding.btnSave.isEnabled = true
+            binding.progressBar.visibility = View.GONE
             Toast.makeText(this, "Selecione uma imagem", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val imagem = Base64Converter.drawableToString(drawable)
+        val imagem = try {
+            Base64Converter.drawableToString(drawable)
+        } catch (e: Exception) {
+            binding.btnSave.isEnabled = true
+            binding.progressBar.visibility = View.GONE
+            Toast.makeText(this, "Erro ao processar imagem", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        val dados = hashMapOf(
-            "descricao" to descricao,
-            "imageString" to imagem,
-            "city" to cidade,
-            "authorId" to userId,
-            "data" to Timestamp.now()
-        )
+        // Busca o username antes de salvar o post
+        Firebase.firestore.collection("usuarios")
+            .document(user.email ?: "")
+            .get()
+            .addOnSuccessListener { doc ->
+                val authorName = doc.getString("username") ?: user.email ?: ""
 
-        FirebaseFirestore.getInstance()
-            .collection("posts")
-            .add(dados)
-            .addOnSuccessListener {
-                Toast.makeText(this, "Post criado!", Toast.LENGTH_SHORT).show()
-                startActivity(Intent(this, HomeActivity::class.java))
-                finish()
+                val dados = hashMapOf(
+                    "descricao" to descricao,
+                    "imageString" to imagem,
+                    "city" to cidade,
+                    "authorId" to user.uid,
+                    "authorName" to authorName,
+                    "data" to Timestamp.now()
+                )
+
+                FirebaseFirestore.getInstance().collection("posts")
+                    .add(dados)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Post criado!", Toast.LENGTH_SHORT).show()
+                        startActivity(Intent(this, HomeActivity::class.java))
+                        finish()
+                    }
+                    .addOnFailureListener { e ->
+                        binding.btnSave.isEnabled = true
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(this, "Erro ao salvar: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
             }
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-                Toast.makeText(this, "Erro ao salvar: ${e.message}", Toast.LENGTH_LONG).show()
+            .addOnFailureListener {
+                // Fallback sem username
+                val dados = hashMapOf(
+                    "descricao" to descricao,
+                    "imageString" to imagem,
+                    "city" to cidade,
+                    "authorId" to user.uid,
+                    "authorName" to (user.email ?: ""),
+                    "data" to Timestamp.now()
+                )
+                FirebaseFirestore.getInstance().collection("posts").add(dados)
+                    .addOnSuccessListener {
+                        startActivity(Intent(this, HomeActivity::class.java))
+                        finish()
+                    }
             }
     }
 }

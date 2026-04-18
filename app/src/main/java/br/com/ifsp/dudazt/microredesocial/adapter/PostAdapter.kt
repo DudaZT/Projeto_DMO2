@@ -1,6 +1,7 @@
 package br.com.ifsp.dudazt.microredesocial.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import br.com.ifsp.dudazt.microredesocial.R
@@ -16,9 +17,7 @@ class PostAdapter(private val posts: MutableList<Post>) :
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val binding = PostItemBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
+            LayoutInflater.from(parent.context), parent, false
         )
         return PostViewHolder(binding)
     }
@@ -36,8 +35,14 @@ class PostAdapter(private val posts: MutableList<Post>) :
         }
 
         holder.binding.txtDescricao.text = post.descricao
-        holder.binding.txtCidade.text = post.city
-        holder.binding.txtAutor.text = post.authorId
+        holder.binding.txtAutor.text = if (post.authorName.isNotBlank()) "@${post.authorName}" else post.authorId
+
+        if (post.city.isNotBlank() && post.city != "desconhecida") {
+            holder.binding.txtCidade.visibility = View.VISIBLE
+            holder.binding.txtCidade.text = "📍 ${post.city.replaceFirstChar { it.uppercase() }}"
+        } else {
+            holder.binding.txtCidade.visibility = View.GONE
+        }
     }
 
     fun adicionarPosts(novosPosts: List<Post>) {
