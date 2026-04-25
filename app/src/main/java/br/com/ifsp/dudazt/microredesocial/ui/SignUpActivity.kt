@@ -48,6 +48,7 @@ class SignUpActivity : AppCompatActivity() {
 
         binding.btnCriarConta.isEnabled = false
 
+        // cria o usuário no firebase auth
         firebaseAuth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -59,6 +60,7 @@ class SignUpActivity : AppCompatActivity() {
                         "fotoPerfil" to ""
                     )
 
+                    // salva os dados do perfil no Firestore
                     Firebase.firestore.collection("usuarios")
                         .document(email)
                         .set(userData)

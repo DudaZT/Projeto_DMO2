@@ -38,7 +38,6 @@ class ProfileActivity : AppCompatActivity() {
         }
         val db = Firebase.firestore
 
-        // Corrigido: click no botão, não na imagem
         binding.btnChangePhoto.setOnClickListener {
             pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
@@ -82,6 +81,8 @@ class ProfileActivity : AppCompatActivity() {
                 Toast.makeText(this, "A nova senha deve ter pelo menos 6 caracteres", Toast.LENGTH_SHORT).show()
                 return
             }
+
+            // atualiza a senha direto no firebase auth
             FirebaseAuth.getInstance().currentUser?.updatePassword(novaSenha)
                 ?.addOnFailureListener { e ->
                     Toast.makeText(this, "Erro ao atualizar senha: ${e.message}", Toast.LENGTH_LONG).show()

@@ -8,6 +8,7 @@ import android.util.Base64
 import androidx.core.graphics.scale
 import java.io.ByteArrayOutputStream
 
+// a imagem é convertida pra Base64 pra salvar no banco
 class Base64Converter {
 
     companion object {

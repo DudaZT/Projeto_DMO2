@@ -34,6 +34,7 @@ class LocalizacaoHelper(private val context: Context) {
             .setMaxUpdateAgeMillis(0)
             .build()
 
+        // pega a localização atual usando GPS
         fusedLocationClient.getCurrentLocation(request, null)
             .addOnSuccessListener { location: Location? ->
 
@@ -53,6 +54,7 @@ class LocalizacaoHelper(private val context: Context) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 
+            // Geocoder: converte latitude e longitude em nome da cidade
             val geocoder = Geocoder(context, Locale.getDefault())
 
             geocoder.getFromLocation(

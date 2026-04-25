@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    // se o usuário já estiver logado, vai direto pro feed
     override fun onStart() {
         super.onStart()
 
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         val email = binding.edtEmail.text.toString()
         val password = binding.edtSenha.text.toString()
 
+        // autenticação pelo firebase
         firebaseAuth
             .signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->

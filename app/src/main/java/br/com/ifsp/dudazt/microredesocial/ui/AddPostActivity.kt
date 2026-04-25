@@ -49,10 +49,12 @@ class AddPostActivity : AppCompatActivity(), LocalizacaoHelper.Callback {
         }
     }
 
+    // abre galeria pra escolher imagem
     private fun abrirGaleria() {
         galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
+    // solicita permissão de localização
     private fun solicitarLocalizacao() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED
@@ -85,6 +87,7 @@ class AddPostActivity : AppCompatActivity(), LocalizacaoHelper.Callback {
         }
     }
 
+    // callback quando localização é obtida
     override fun onLocalizacaoRecebida(endereco: Address, latitude: Double, longitude: Double) {
         val cidade = listOfNotNull(endereco.locality, endereco.subAdminArea, endereco.adminArea)
             .firstOrNull() ?: "desconhecida"
@@ -95,6 +98,7 @@ class AddPostActivity : AppCompatActivity(), LocalizacaoHelper.Callback {
         salvarPost("desconhecida")
     }
 
+    // salva o post no Firestore
     private fun salvarPost(cidade: String) {
         val descricao = binding.edtDescricao.text.toString().trim()
 
