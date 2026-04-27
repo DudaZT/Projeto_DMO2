@@ -111,6 +111,8 @@ O aplicativo foi desenvolvido utilizando boas práticas de UI/UX:
 📌 Vídeo curto (30s):
 👉 [Download](video/videodemonstracao.mp4)
 
+https://github.com/DudaZT/Projeto_DMO2/blob/main/video/videodemonstracao.mp4
+
 📌 Vídeo explicativo (5–10 min):
 👉 [Download](video/videoexplicativo.mp4)
 
